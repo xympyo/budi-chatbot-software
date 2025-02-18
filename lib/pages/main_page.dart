@@ -32,45 +32,35 @@ class _MainPageState extends State<MainPage> {
     });
     String userMessage = _controller.text;
     _controller.clear();
-
     getBotResponse(userMessage).then(
-      (userMsg) {
-        setState(() {
-          messages.add({"sender": "bot", "text": "Bot Response: $userMessage"});
-          isLoading = false;
-        });
+      (botResponse) {
+        setState(
+          () {
+            messages.add({"sender": "bot", "text": botResponse});
+            isLoading = false;
+          },
+        );
       },
     );
   }
 
   Future<String> getBotResponse(String message) async {
-    await Future.delayed(
-      const Duration(seconds: 3),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse("http://192.168.1.5:5000/send"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"message": message}),
+      );
 
-    return "yes";
-
-    /* 
-    TO DO LIST :
-    1. CREATE IF ELSE FUNCTION TO HANDLE LOGIC, WHICH API TO CALL (SCIENTIFIC OR NOT)
-    JUST BELOW HERE 
-    isScientific ? callScienceApi : callNormalApi 
-    */
-
-    // final response = await http.post(
-    //   Uri.parse("http://127.0.0.1:5000/chatbot"),
-    //   headers: {"Content-Type": "application/json"},
-    //   body: jsonEncode(
-    //     {"message": message},
-    //   ),
-    // );
-
-    // if (response.statusCode == 200) {
-    //   var data = jsonDecode(response.body);
-    //   return data["response"];
-    // } else {
-    //   return "Error: Bot is not available";
-    // }
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        return data["response"];
+      } else {
+        return "Error: Bot is not available";
+      }
+    } catch (e) {
+      return "Error: Unable to reach the server";
+    }
   }
 
   void changeTopic() {
